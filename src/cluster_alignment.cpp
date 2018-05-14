@@ -3,7 +3,7 @@
 #include "cook_io.h"
 #include "cook_geometry.h"
 #include "alignment.h"
-
+#include <time.h>
 typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointP;
 typedef pcl::PointCloud<pcl::PointXYZ>  PointC;
 typedef pcl::PointCloud<pcl::Normal>::Ptr NormalP;
@@ -13,6 +13,8 @@ typedef pcl::PointCloud<pcl::Normal> NormalC;
 int
 main (int argc, char **argv)
 {
+  clock_t startTime,endTime;
+  startTime= clock();
   if (argc < 3)
   {
     printf ("No target PCD file given!\n");
@@ -29,7 +31,7 @@ main (int argc, char **argv)
 
   // Preprocess the cloud by...
   // ...removing distant points
-  const float depth_limit = 0.4;
+  const float depth_limit = 0.8;
   PrePassThrough(cloud,cloud,0,depth_limit);
 
   // ... and downsampling the point cloud
@@ -44,17 +46,32 @@ main (int argc, char **argv)
   cloud = cloud_sor_voxel;
 
   int num_cluster;
-  num_cluster = ExtractClusters(cloud,0.005,60000,500);
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clusters;
+  num_cluster = ExtractClusters(cloud,clusters,0.005,60000,500);
 
+  //num_cluster = ExtractClusters(cloud,0.005,60000,500);
   int alig_model_count=0;
   std::vector<PlateInformation> infor;
   std::vector<PlateInformation> infor_all;
-  for(int i=0;i<num_cluster;i++)
+  float diff = 0.0;
+  float xmin,xmax;
+  int index_large_diff;
+  for (int i=0;i<num_cluster;i++)
   {
-    std::cout<< "-------------- new cluster --------------------------------" << std::endl;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZ>);
-    ReadCloud(cluster,"cluster_",i,".pcd");
-    alig_model_count+=AlignAllModels(cluster,object_templates,0.000015,infor);
+    findXMinMax(clusters[i],xmin,xmax);
+    if(xmax-xmin > diff)
+    {
+      diff = xmax-xmin;
+      index_large_diff=i;
+    }
+  }
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>::iterator it = clusters.begin() + index_large_diff;
+  clusters.erase(it);
+
+  for(int i=0;i<num_cluster-1;i++)
+  {
+    std::cout<< "-------------cluster " << i << "-----------------" << std::endl;
+    alig_model_count+=AlignAllModels(clusters[i],object_templates,0.000010,infor);
     infor_all.insert(infor_all.end(),infor.begin(),infor.end());
   }
 
@@ -69,9 +86,9 @@ main (int argc, char **argv)
     std::cout<<"z: "<< infor_all[i].z << " cm " << std::endl;
     std::cout<<"r: "<< infor_all[i].radius << " cm " << std::endl;
   }
-
-  pcl::io::savePCDFileBinary ("sence_after_extract.pcd", *cloud);
-
-  ShowCloud(cloud);
+  endTime = clock();
+  std::cout << "Total time : " << (double)(endTime-startTime)/ CLOCKS_PER_SEC << "s" << std::endl;
+//  pcl::io::savePCDFileBinary ("sence_after_extract.pcd", *cloud);
+//  ShowCloud(cloud);
   return (0);
 }
