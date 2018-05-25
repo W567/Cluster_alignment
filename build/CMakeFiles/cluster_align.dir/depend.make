@@ -256,6 +256,7 @@ CMakeFiles/cluster_align.dir/src/cluster_alignment.cpp.o: /usr/local/include/pcl
 CMakeFiles/cluster_align.dir/src/cluster_alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/common/transforms.h
 CMakeFiles/cluster_align.dir/src/cluster_alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/console/parse.h
 CMakeFiles/cluster_align.dir/src/cluster_alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/console/print.h
+CMakeFiles/cluster_align.dir/src/cluster_alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/console/time.h
 CMakeFiles/cluster_align.dir/src/cluster_alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/conversions.h
 CMakeFiles/cluster_align.dir/src/cluster_alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/correspondence.h
 CMakeFiles/cluster_align.dir/src/cluster_alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/exceptions.h
@@ -794,6 +795,7 @@ CMakeFiles/cluster_align.dir/src/libForPCL/src/alignment.cpp.o: /usr/local/inclu
 CMakeFiles/cluster_align.dir/src/libForPCL/src/alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/common/transforms.h
 CMakeFiles/cluster_align.dir/src/libForPCL/src/alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/console/parse.h
 CMakeFiles/cluster_align.dir/src/libForPCL/src/alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/console/print.h
+CMakeFiles/cluster_align.dir/src/libForPCL/src/alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/console/time.h
 CMakeFiles/cluster_align.dir/src/libForPCL/src/alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/conversions.h
 CMakeFiles/cluster_align.dir/src/libForPCL/src/alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/correspondence.h
 CMakeFiles/cluster_align.dir/src/libForPCL/src/alignment.cpp.o: /usr/local/include/pcl-1.8/pcl/exceptions.h

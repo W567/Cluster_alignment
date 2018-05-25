@@ -4,6 +4,7 @@
 #include "cook_geometry.h"
 #include "alignment.h"
 #include <time.h>
+#include <pcl/console/time.h>
 typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointP;
 typedef pcl::PointCloud<pcl::PointXYZ>  PointC;
 typedef pcl::PointCloud<pcl::Normal>::Ptr NormalP;
@@ -21,6 +22,8 @@ main (int argc, char **argv)
     return (-1);
   }
 
+  pcl::console::TicToc tt;
+  std::cerr << "Loading...\n", tt.tic ();
   // Load the object templates specified in the object_templates.txt file
   std::vector<FeatureCloud> object_templates;
   InputStream(object_templates,argv[1]);
@@ -28,9 +31,11 @@ main (int argc, char **argv)
   // Load the target cloud PCD file
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::io::loadPLYFile (argv[2], *cloud);
+  std::cerr << ">> Done: " << tt.toc () << " ms\n";
 
   // Preprocess the cloud by...
   // ...removing distant points
+  std::cerr << "preparing...\n", tt.tic ();
   const float depth_limit = 0.8;
   PrePassThrough(cloud,cloud,0,depth_limit);
 
@@ -44,10 +49,25 @@ main (int argc, char **argv)
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_sor_voxel (new pcl::PointCloud<pcl::PointXYZ>);
   RemoveOutlier(tempCloud,cloud_sor_voxel,50,0.3);
   cloud = cloud_sor_voxel;
-
+  std::cerr << ">> Done: " << tt.toc () << " ms\n";
+  ShowCloud(cloud);
+/*  std::cerr << "Extracting Plane...\n", tt.tic ();
+  pcl::PointCloud<pcl::Normal>::Ptr normal (new pcl::PointCloud<pcl::Normal>);
+  EstimateNormal(cloud_sor_voxel,normal,50);
+  pcl::ModelCoefficients::Ptr coefficients_plane(new pcl::ModelCoefficients);
+  pcl::PointIndices::Ptr inliers_plane(new pcl::PointIndices);
+  SegmentPlane(cloud_sor_voxel,normal,coefficients_plane,inliers_plane,0.015);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_nobase (new pcl::PointCloud<pcl::PointXYZ>);
+  ExtractCloud(cloud_sor_voxel,inliers_plane,cloud_nobase,true);
+  cloud=cloud_nobase;
+  ShowCloud(cloud);
+*/
+  std::cerr << "clustering...\n", tt.tic ();
   int num_cluster;
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clusters;
-  num_cluster = ExtractClusters(cloud,clusters,0.005,60000,500);
+//  ExtractClusters(cloud,0.005,60000,1000);
+  num_cluster = ExtractClusters(cloud,clusters,0.005,60000,1000);
+  std::cerr << ">> Done: " << tt.toc () << " ms\n";
 
   //num_cluster = ExtractClusters(cloud,0.005,60000,500);
   int alig_model_count=0;
@@ -58,6 +78,8 @@ main (int argc, char **argv)
   int index_large_diff;
   for (int i=0;i<num_cluster;i++)
   {
+    WriteCloud(clusters[i],"cluster.pcd");
+    ShowCloud(clusters[i]);
     findXMinMax(clusters[i],xmin,xmax);
     if(xmax-xmin > diff)
     {
@@ -68,10 +90,26 @@ main (int argc, char **argv)
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>::iterator it = clusters.begin() + index_large_diff;
   clusters.erase(it);
 
+
   for(int i=0;i<num_cluster-1;i++)
   {
     std::cout<< "-------------cluster " << i << "-----------------" << std::endl;
-    alig_model_count+=AlignAllModels(clusters[i],object_templates,0.000010,infor);
+/*
+      std::cerr << "Extracting Plane...\n", tt.tic ();
+      pcl::PointCloud<pcl::Normal>::Ptr normal (new pcl::PointCloud<pcl::Normal>);
+      EstimateNormal(clusters[i],normal,50);
+      pcl::ModelCoefficients::Ptr coefficients_plane(new pcl::ModelCoefficients);
+      pcl::PointIndices::Ptr inliers_plane(new pcl::PointIndices);
+      SegmentPlane(clusters[i],normal,coefficients_plane,inliers_plane,0.015);
+      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_nobase (new pcl::PointCloud<pcl::PointXYZ>);
+      ExtractCloud(clusters[i],inliers_plane,cloud_nobase,true);
+
+      pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_sor (new pcl::PointCloud<pcl::PointXYZ>);
+      RemoveOutlier(cloud_nobase,cloud_sor,50,0.3);
+      ShowCloud(cloud_sor);
+      clusters[i]=cloud_sor;
+*/
+    alig_model_count+=AlignAllModels(clusters[i],object_templates,0.000020,infor);
     infor_all.insert(infor_all.end(),infor.begin(),infor.end());
   }
 
@@ -90,5 +128,7 @@ main (int argc, char **argv)
   std::cout << "Total time : " << (double)(endTime-startTime)/ CLOCKS_PER_SEC << "s" << std::endl;
 //  pcl::io::savePCDFileBinary ("sence_after_extract.pcd", *cloud);
 //  ShowCloud(cloud);
+
   return (0);
+
 }

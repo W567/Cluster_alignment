@@ -22,6 +22,9 @@ void InputStream(std::vector<FeatureCloud>& object_templates,char* fname)
 //first step: align models with targets
 void AlignCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& target_in,std::vector<FeatureCloud>& templates_in,int& best_index,TemplateAlignment::Result& best_alignment)
 {
+  pcl::console::TicToc tt;
+  std::cerr << "Aligning one...\n", tt.tic ();
+
   FeatureCloud target_cloud;
   target_cloud.setInputCloud (target_in);
 
@@ -38,11 +41,15 @@ void AlignCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& target_in,std::vector<Featu
 
   // Print the alignment fitness score (values less than 0.00002 are good)
   printf ("Best fitness score: %f\n", best_alignment.fitness_score);
+  std::cerr << ">> Done: " << tt.toc () << " ms\n";
 }
 
 //second step: evaluate the alignments and extract the neighbours of the models if it is a good alignment.
 int ExtractAlignedModel(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,pcl::PointCloud<pcl::PointXYZ>::Ptr& model_in,TemplateAlignment::Result& best_alignment,float r,float voxel_size_in)
 {
+  pcl::console::TicToc tt;
+  std::cerr << "Extracting...\n", tt.tic ();
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr model(new pcl::PointCloud<pcl::PointXYZ>);
   DownSampleCloud(model_in,model,voxel_size_in);
   float radius=sqrt(3)*voxel_size_in/2;
@@ -71,6 +78,7 @@ int ExtractAlignedModel(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,pcl::PointClo
   ExtractCloud(cloud,inliers,cloud,true);
 //  if(EvaluateTarget(target,model,best_alignment,r)==1)
 //  {
+std::cerr << ">> Done: " << tt.toc () << " ms\n";
     return 1;
 //  }
 //  else
@@ -82,6 +90,9 @@ int ExtractAlignedModel(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,pcl::PointClo
 
 int EvaluateTarget(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,pcl::PointCloud<pcl::PointXYZ>::Ptr& model_in,TemplateAlignment::Result& best_alignment,float radius)
 {
+  pcl::console::TicToc tt;
+  std::cerr << "Evaluating...\n", tt.tic ();
+
   Eigen::Matrix4f transform_back= best_alignment.final_transformation.inverse();
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_target (new pcl::PointCloud<pcl::PointXYZ>);
@@ -105,6 +116,7 @@ int EvaluateTarget(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,pcl::PointCloud<pc
   if(cloud_sor_plane->points.size()<100)
   {
     std::cout << "points after plane extracting are not enough for circle segmentation" << std::endl;
+    std::cerr << ">> Done: " << tt.toc () << " ms\n";
     return 0;
   }
   EstimateNormal(cloud_sor_plane,normal);
@@ -137,23 +149,27 @@ int EvaluateTarget(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,pcl::PointCloud<pc
       if( cloud_circle->points.size() > 0.5 * cloud_sor_plane->points.size() )
       {
         std::cout << "valid target" << std::endl;
+        std::cerr << ">> Done: " << tt.toc () << " ms\n";
         return 1; //valid target
       }
       else
       {
         std::cout << "quantity unsatisfied" << std::endl;
+        std::cerr << ">> Done: " << tt.toc () << " ms\n";
         return 0;  //quantity unsatisfied
       }
     }
     else
     {
       std::cout << "centroid unsatisfied" << std::endl;
+      std::cerr << ">> Done: " << tt.toc () << " ms\n";
       return 0;
     }
   }
   else
   {
     std::cout << "normal unsatisfied" << std::endl;
+    std::cerr << ">> Done: " << tt.toc () << " ms\n";
     return 0;  // normal of the circle unsatisfied
   }
 }
@@ -163,6 +179,9 @@ int EvaluateTarget(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud,pcl::PointCloud<pc
 //
 int AlignAllModels(pcl::PointCloud<pcl::PointXYZ>::Ptr& target_in,std::vector<FeatureCloud>& templates_in,float fit_threshold,std::vector<PlateInformation>& infor)
 {
+  pcl::console::TicToc tt;
+  std::cerr << "Aligning ALL...\n", tt.tic ();
+
   static int j = 0;
   int i = 0;
   float fit_score = 0;
@@ -198,10 +217,12 @@ int AlignAllModels(pcl::PointCloud<pcl::PointXYZ>::Ptr& target_in,std::vector<Fe
       ss << "model_aligned_" << j << ".pcd";
       writer.write<pcl::PointXYZ> (ss.str (), *transformed_cloud, false); //*
       j++;
+      std::cerr << ">> Done: " << tt.toc () << " ms\n";
       return 1;
     }
     else
     {
+      std::cerr << ">> Done: " << tt.toc () << " ms\n";
       return 0;
     }
 

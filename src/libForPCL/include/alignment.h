@@ -15,6 +15,7 @@
 #include "cook_io.h"
 #include "cook_geometry.h"
 #include "cook_seg.h"
+#include <pcl/console/time.h>
 
 class FeatureCloud
 {
@@ -28,7 +29,8 @@ class FeatureCloud
     FeatureCloud () :
       search_method_xyz_ (new SearchMethod),
       normal_radius_ (0.02f),
-      feature_radius_ (0.02f)
+      feature_radius_ (0.015f),
+      normal_k_(30)
     {}
 
     ~FeatureCloud () {}
@@ -89,7 +91,8 @@ class FeatureCloud
       pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> norm_est;
       norm_est.setInputCloud (xyz_);
       norm_est.setSearchMethod (search_method_xyz_);
-      norm_est.setRadiusSearch (normal_radius_);
+      norm_est.setKSearch(normal_k_);
+      //norm_est.setRadiusSearch (normal_radius_);
       norm_est.compute (*normals_);
     }
 
@@ -115,6 +118,7 @@ class FeatureCloud
     SearchMethod::Ptr search_method_xyz_;
 
     // Parameters
+    int normal_k_;
     float normal_radius_;
     float feature_radius_;
 };
@@ -134,7 +138,7 @@ class TemplateAlignment
       min_sample_distance_ (0.07f),//0.05
       max_correspondence_distance_ (0.01f*0.01f),
       //max_correspondence_distance_(0.001f),
-      nr_iterations_ (200) //500
+      nr_iterations_ (500) //500
     {
       // Initialize the parameters in the Sample Consensus Initial Alignment (SAC-IA) algorithm
       sac_ia_.setMinSampleDistance (min_sample_distance_);

@@ -9,11 +9,12 @@ Third, apply sac-ia to all the other clusters and get the valid targets which sa
 
 
 *******************************************************************************************************************************************
-Time to process the plate_both.ply : 20 s 
+Time to process the plate_both.ply : 38 s  for 2 plates with the literator of 500. 
 
 
 *******************************************************************************************************************************************
-Shortcoming : 
+Shortcoming : sometimes can't extract the plate cluster out because of other stuff.
+              and the execution time is base on the amount of clusters it extracted, while some of the clusters may not have the plate target inside.
 
 *******************************************************************************************************************************************
-Advantage : 
+Advantage : Since the target for aligning is smaller then aligning directly, it can save some time for each aligning. And the final result can get a better score (average distance).
